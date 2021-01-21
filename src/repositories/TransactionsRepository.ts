@@ -20,14 +20,38 @@ class TransactionsRepository {
   }
 
   public all(): Transaction[] {
-    // TODO
+    return this.transactions;
   }
 
   public getBalance(): Balance {
-    // TODO
+    const onlyIncome = [];
+    const onlyOutcome = [];
+    for (const x of this.transactions) {
+      if (x.type === 'income') onlyIncome.push(x);
+      else onlyOutcome.push(x);
+    }
+
+    const income = onlyIncome.reduce(
+      (previousValue, currentValue) => previousValue + currentValue.value,
+      0,
+    );
+    const outcome = onlyOutcome.reduce(
+      (previousValue, currentValue) => previousValue + currentValue.value,
+      0,
+    );
+
+    const total = income - outcome;
+
+    const balance = { income, outcome, total };
+
+    return balance;
   }
 
   public create({ title, value, type }: CreateTransactionDTO): Transaction {
+    if (type === 'outcome' && value > this.getBalance().total) {
+      throw Error('Not enought founds.');
+    }
+
     const transaction = new Transaction({ title, value, type });
     this.transactions.push(transaction);
     return transaction;
