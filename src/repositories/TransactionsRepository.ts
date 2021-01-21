@@ -24,11 +24,13 @@ class TransactionsRepository {
   }
 
   public getBalance(): Balance {
-    const onlyIncome = [];
+    /**
+     *    const onlyIncome = [];
     const onlyOutcome = [];
-    for (const x of this.transactions) {
-      if (x.type === 'income') onlyIncome.push(x);
-      else onlyOutcome.push(x);
+
+    for (const transaction of this.transactions) {
+      if (transaction.type === 'income') onlyIncome.push(transaction);
+      else onlyOutcome.push(transaction);
     }
 
     const income = onlyIncome.reduce(
@@ -45,11 +47,42 @@ class TransactionsRepository {
     const balance = { income, outcome, total };
 
     return balance;
+     *
+     */
+
+    const { income, outcome } = this.transactions.reduce(
+      (accumulator: Balance, transaction: Transaction) => {
+        switch (transaction.type) {
+          case 'income':
+            accumulator.income += transaction.value;
+            break;
+          case 'outcome':
+            accumulator.outcome += transaction.value;
+            break;
+          default:
+            break;
+        }
+        return accumulator;
+      },
+      {
+        income: 0,
+        outcome: 0,
+        total: 0,
+      },
+    );
+
+    const total = income - outcome;
+
+    return { income, outcome, total };
   }
 
   public create({ title, value, type }: CreateTransactionDTO): Transaction {
+    if (!['income', 'outcome'].includes(type)) {
+      throw new Error('Transaction type is invalid');
+    }
+
     if (type === 'outcome' && value > this.getBalance().total) {
-      throw Error('Not enought founds.');
+      throw new Error('Not enought founds.');
     }
 
     const transaction = new Transaction({ title, value, type });
